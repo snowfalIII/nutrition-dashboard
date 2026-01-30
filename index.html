@@ -1195,7 +1195,9 @@
             updateSavedFoodsList();
         }
 
-        function addSavedFood(food) {
+        function addSavedFood(index) {
+            const food = data.savedFoods[index];
+            if (!food) return;
             const multiplier = parseFloat(document.getElementById('servingMultiplier').value) || 1;
             const adjustedFood = {
                 name: multiplier !== 1 ? `${food.name} (×${multiplier})` : food.name,
@@ -1225,7 +1227,7 @@
                 return;
             }
             container.innerHTML = data.savedFoods.map((f, i) => `
-                <div class="saved-food-item" onclick='addSavedFood(${JSON.stringify(f)})'>
+                <div class="saved-food-item" onclick="addSavedFood(${i})">
                     <div class="food-info">
                         <div class="food-name">${f.name}</div>
                         ${f.serving ? `<div class="food-serving">${f.serving}</div>` : ''}
