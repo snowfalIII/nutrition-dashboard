@@ -282,7 +282,7 @@
         .water-glass.filled { background: linear-gradient(180deg, #00d9ff 0%, #0099cc 100%); }
         .water-glass:hover { transform: scale(1.1); }
 
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .tab {
             padding: 10px 20px; background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px;
@@ -361,16 +361,9 @@
 
         .weight-chart {
             background: rgba(255, 255, 255, 0.03); border-radius: 12px;
-            padding: 20px; height: 300px; position: relative;
+            padding: 20px; min-height: 200px; position: relative;
         }
-        .chart-container { height: 220px; display: flex; align-items: flex-end; gap: 4px; padding: 10px 0; overflow: hidden; }
-        .chart-bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
-        .chart-bar {
-            width: 100%; background: linear-gradient(180deg, #00d9ff, #00ff88);
-            border-radius: 4px 4px 0 0; transition: height 0.3s; min-height: 4px;
-        }
-        .chart-label { font-size: 0.65rem; color: #8892b0; white-space: nowrap; }
-        .chart-value { font-size: 0.7rem; color: #ccd6f6; font-weight: 500; white-space: nowrap; }
+        .chart-container { min-height: 160px; padding: 5px 0; }
 
         .weight-input-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px; }
         .weight-input-row .form-group { flex: 1; }
@@ -415,6 +408,36 @@
         .trend-indicator.down { background: rgba(0, 255, 136, 0.2); color: #00ff88; }
         .trend-indicator.up { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
         .trend-indicator.stable { background: rgba(249, 202, 36, 0.2); color: #f9ca24; }
+
+        /* Copy yesterday */
+        .copy-btn { padding: 7px 14px; background: rgba(0,217,255,0.1); border: 1px solid rgba(0,217,255,0.3); border-radius: 6px; color: #00d9ff; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        .copy-btn:hover { background: rgba(0,217,255,0.2); }
+        /* Streak */
+        .streak-badge { display: inline-flex; align-items: center; gap: 5px; background: rgba(249,202,36,0.15); border: 1px solid rgba(249,202,36,0.3); border-radius: 20px; padding: 3px 10px; font-size: 0.8rem; color: #f9ca24; }
+        /* Deficit vis */
+        .deficit-vis { margin-top: 15px; background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; }
+        .deficit-vis-labels { display: flex; justify-content: space-between; color: #8892b0; font-size: 0.78rem; margin-bottom: 5px; }
+        .deficit-vis-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-bottom: 7px; }
+        .deficit-vis-fill { height: 100%; border-radius: 4px; transition: width 0.4s; background: linear-gradient(90deg,#00d9ff,#00ff88); }
+        .deficit-vis-fill.surplus { background: linear-gradient(90deg,#ff6b6b,#f9ca24); }
+        .deficit-vis-summary { display: flex; justify-content: space-between; font-size: 0.82rem; }
+        .dv-green { color: #00ff88; font-weight: 600; }
+        .dv-red { color: #ff6b6b; font-weight: 600; }
+        /* Search */
+        .search-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .search-row input { flex: 1; }
+        .search-results { max-height: 240px; overflow-y: auto; }
+        /* Meal templates */
+        .meals-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .meal-templates-list { max-height: 240px; overflow-y: auto; }
+        .meal-meta { color: #00d9ff; font-size: 0.78rem; margin-top: 2px; }
+        /* Weekly averages */
+        .weekly-avg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .weekly-avg-item { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px; overflow: hidden; }
+        .weekly-avg-val { font-size: 1.25rem; font-weight: bold; margin-bottom: 2px; }
+        .weekly-avg-lbl { color: #8892b0; font-size: 0.78rem; margin-bottom: 6px; }
+        .weekly-avg-bar { height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        .weekly-avg-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
 
         @media (max-width: 768px) {
             .form-row, .form-row.four { grid-template-columns: 1fr; }
@@ -492,8 +515,14 @@
         <div id="dailyTab" class="tab-content active">
             <div class="date-nav">
                 <button onclick="changeDate(-1)">← Previous</button>
-                <span class="current-date" id="currentDate"></span>
+                <div style="text-align:center;">
+                    <span class="current-date" id="currentDate"></span>
+                    <div id="streakBadge" style="margin-top:5px;"></div>
+                </div>
                 <button onclick="changeDate(1)">Next →</button>
+            </div>
+            <div style="text-align:center; margin-bottom:15px;">
+                <button class="copy-btn" onclick="copyYesterdaysMeals()">📋 Copy Yesterday's Meals</button>
             </div>
 
             <div class="dashboard-grid">
@@ -520,6 +549,19 @@
                         <div class="stat eaten"><div class="stat-value" id="eatenCal">0</div><div class="stat-label">Eaten</div></div>
                         <div class="stat burned"><div class="stat-value" id="burnedCal">0</div><div class="stat-label">Burned</div></div>
                         <div class="stat net"><div class="stat-value" id="netCal">0</div><div class="stat-label">Net</div></div>
+                    </div>
+                    <div class="deficit-vis">
+                        <div class="deficit-vis-labels">
+                            <span>Calorie budget used</span>
+                            <span>TDEE: <span id="dvTdee">0</span></span>
+                        </div>
+                        <div class="deficit-vis-bar">
+                            <div class="deficit-vis-fill" id="deficitBarFill" style="width:0%"></div>
+                        </div>
+                        <div class="deficit-vis-summary">
+                            <span style="color:#8892b0;">Net: <span id="dvNetCal">0</span> cal</span>
+                            <span>Deficit: <span id="dvDeficit" class="dv-green">0</span> cal</span>
+                        </div>
                     </div>
                 </div>
 
@@ -562,6 +604,8 @@
                         <button class="tab active" onclick="switchFoodTab('manual')">Manual</button>
                         <button class="tab" onclick="switchFoodTab('quick')">Quick Add</button>
                         <button class="tab" onclick="switchFoodTab('myfoods')">My Foods</button>
+                        <button class="tab" onclick="switchFoodTab('search')">🔍 Search</button>
+                        <button class="tab" onclick="switchFoodTab('meals')">🍽 Meals</button>
                     </div>
                     <div id="manualTab">
                         <div class="form-row">
@@ -604,6 +648,22 @@
                             <p style="color: #8892b0; margin: 0;">servings)</p>
                         </div>
                         <div class="saved-foods-list" id="savedFoodsList"></div>
+                    </div>
+                    <div id="searchTab" class="hidden">
+                        <div class="search-row">
+                            <input type="text" id="foodSearchInput" placeholder="Search any food..." onkeydown="if(event.key==='Enter') searchFoods()" style="padding:12px; border:1px solid rgba(255,255,255,0.2); border-radius:8px; background:rgba(255,255,255,0.05); color:#fff; font-size:1rem;">
+                            <button class="btn btn-primary" onclick="searchFoods()" style="padding:12px 16px; white-space:nowrap;">Search</button>
+                        </div>
+                        <div class="search-results" id="searchResults">
+                            <p style="color:#8892b0; text-align:center; padding:20px; font-size:0.9rem;">Search any food to see nutrition info</p>
+                        </div>
+                    </div>
+                    <div id="mealsTab" class="hidden">
+                        <div class="meals-hdr">
+                            <span style="color:#8892b0; font-size:0.9rem;">Click a template to log it</span>
+                            <button class="save-food-btn" onclick="saveMealTemplate()">+ Save Today's Log</button>
+                        </div>
+                        <div class="meal-templates-list" id="mealTemplatesList"></div>
                     </div>
                 </div>
 
@@ -652,7 +712,7 @@
 
                 <!-- Food Log -->
                 <div class="card">
-                    <h2><span>📝</span> Today's Food Log</h2>
+                    <h2 style="display:flex; align-items:center;"><span>📝</span> Today's Food Log <button class="save-food-btn" onclick="saveMealTemplate()" style="margin-left:auto; font-size:0.75rem;">💾 Save as Template</button></h2>
                     <div class="food-log" id="foodLog"><p style="color: #8892b0; text-align: center; padding: 20px;">No foods logged yet</p></div>
                 </div>
 
@@ -774,6 +834,32 @@
                     <h2><span>📅</span> Last 7 Days</h2>
                     <div id="dailyBreakdown"></div>
                 </div>
+                <div class="card">
+                    <h2><span>📊</span> 7-Day Macro Averages</h2>
+                    <p style="color:#8892b0; font-size:0.85rem; margin-bottom:5px;">vs. daily goals (logged days only)</p>
+                    <div class="weekly-avg-grid">
+                        <div class="weekly-avg-item">
+                            <div class="weekly-avg-val" id="avgCal7d" style="color:#00d9ff;">--</div>
+                            <div class="weekly-avg-lbl">avg cal / <span id="avgCalGoalLbl">2000</span> goal</div>
+                            <div class="weekly-avg-bar"><div class="weekly-avg-fill" id="avgCalBar" style="width:0%; background:linear-gradient(90deg,#00d9ff,#00ff88)"></div></div>
+                        </div>
+                        <div class="weekly-avg-item">
+                            <div class="weekly-avg-val" id="avgProt7d" style="color:#ff6b6b;">--</div>
+                            <div class="weekly-avg-lbl">avg protein / <span id="avgProtGoalLbl">150g</span> goal</div>
+                            <div class="weekly-avg-bar"><div class="weekly-avg-fill" id="avgProtBar" style="width:0%; background:linear-gradient(90deg,#ff6b6b,#ff8e8e)"></div></div>
+                        </div>
+                        <div class="weekly-avg-item">
+                            <div class="weekly-avg-val" id="avgCarb7d" style="color:#4ecdc4;">--</div>
+                            <div class="weekly-avg-lbl">avg carbs / <span id="avgCarbGoalLbl">200g</span> goal</div>
+                            <div class="weekly-avg-bar"><div class="weekly-avg-fill" id="avgCarbBar" style="width:0%; background:linear-gradient(90deg,#4ecdc4,#44a08d)"></div></div>
+                        </div>
+                        <div class="weekly-avg-item">
+                            <div class="weekly-avg-val" id="avgFat7d" style="color:#f9ca24;">--</div>
+                            <div class="weekly-avg-lbl">avg fat / <span id="avgFatGoalLbl">65g</span> goal</div>
+                            <div class="weekly-avg-bar"><div class="weekly-avg-fill" id="avgFatBar" style="width:0%; background:linear-gradient(90deg,#f9ca24,#f0932b)"></div></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -892,6 +978,7 @@
                 updateDisplay();
                 updateWeeklyDisplay();
                 updateSavedFoodsList();
+                updateMealTemplatesList();
             } catch (err) {
                 console.error('Load error:', err);
                 setSyncStatus('error');
@@ -955,10 +1042,13 @@
         function switchFoodTab(tab) {
             document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            document.getElementById('manualTab').classList.toggle('hidden', tab !== 'manual');
-            document.getElementById('quickTab').classList.toggle('hidden', tab !== 'quick');
-            document.getElementById('myfoodsTab').classList.toggle('hidden', tab !== 'myfoods');
+            ['manualTab','quickTab','myfoodsTab','searchTab','mealsTab'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.classList.add('hidden');
+            });
+            const active = document.getElementById(tab + 'Tab');
+            if (active) active.classList.remove('hidden');
             if (tab === 'myfoods') updateSavedFoodsList();
+            if (tab === 'meals') updateMealTemplatesList();
         }
 
         function addFood() {
@@ -1074,15 +1164,7 @@
 
         function updateWeeklyDisplay() {
             const today = new Date(), weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
-            const recentWeights = data.weights.slice(-14);
-            const chartContainer = document.getElementById('weightChart');
-            if (recentWeights.length > 0) {
-                const min = Math.min(...recentWeights.map(w => w.weight)) - 2, max = Math.max(...recentWeights.map(w => w.weight)) + 2, range = max - min || 1;
-                chartContainer.innerHTML = recentWeights.map(w => {
-                    const height = ((w.weight - min) / range) * 180, d = new Date(w.date);
-                    return `<div class="chart-bar-wrapper"><div class="chart-value">${w.weight}</div><div class="chart-bar" style="height: ${height}px"></div><div class="chart-label">${d.getMonth()+1}/${d.getDate()}</div></div>`;
-                }).join('');
-            } else { chartContainer.innerHTML = '<p style="color: #8892b0; text-align: center; width: 100%; padding: 50px;">No weight data</p>'; }
+            drawWeightLineChart();
             document.getElementById('weightLog').innerHTML = data.weights.slice(-10).reverse().map(w => `<div class="weight-entry"><span class="date">${new Date(w.date).toLocaleDateString()}</span><span class="weight">${w.weight} lbs</span><button class="delete-btn" onclick="deleteWeight('${w.date}')">✕</button></div>`).join('') || '<p style="color: #8892b0;">No entries</p>';
             const weekWeights = data.weights.filter(w => new Date(w.date) >= weekAgo);
             let weightChange = 0, trendClass = 'neutral', trendText = 'Not enough data';
@@ -1117,6 +1199,40 @@
             const logPct = Math.round((daysLogged / 7) * 100);
             updateCompliance('cal', calPct); updateCompliance('protein', protPct); updateCompliance('logging', logPct);
             document.getElementById('dailyBreakdown').innerHTML = breakdown.map(d => `<div class="log-item" style="opacity: ${d.logged ? 1 : 0.5}"><div class="log-item-info"><h4>${d.day}</h4><p>${d.logged ? `P: ${d.protein}g | Deficit: ${d.deficit > 0 ? '+' : ''}${d.deficit}` : 'No data'}</p></div><div class="log-item-calories"><div class="cal">${d.logged ? d.cals : '-'}</div><div class="time">net cal</div></div></div>`).join('');
+            // 7-day macro averages
+            let tc7=0,tp7=0,tcarb7=0,tf7=0,l7=0;
+            for (let i=6;i>=0;i--) {
+                const d2=new Date(today); d2.setDate(d2.getDate()-i);
+                const k=getDateKey(d2), dd=data.days[k];
+                if (dd && dd.foods && dd.foods.length>0) {
+                    const burned=dd.exercises?.reduce((s,e)=>s+e.calories,0)||0;
+                    tc7+=dd.foods.reduce((s,f)=>s+f.calories,0)-burned;
+                    tp7+=dd.foods.reduce((s,f)=>s+f.protein,0);
+                    tcarb7+=dd.foods.reduce((s,f)=>s+f.carbs,0);
+                    tf7+=dd.foods.reduce((s,f)=>s+f.fat,0);
+                    l7++;
+                }
+            }
+            const avgCalEl=document.getElementById('avgCal7d');
+            if (avgCalEl) {
+                if (l7>0) {
+                    const aC=Math.round(tc7/l7),aP=Math.round(tp7/l7),aCb=Math.round(tcarb7/l7),aF=Math.round(tf7/l7);
+                    avgCalEl.textContent=aC;
+                    document.getElementById('avgProt7d').textContent=aP+'g';
+                    document.getElementById('avgCarb7d').textContent=aCb+'g';
+                    document.getElementById('avgFat7d').textContent=aF+'g';
+                    document.getElementById('avgCalBar').style.width=Math.min((aC/data.goals.calories)*100,110)+'%';
+                    document.getElementById('avgProtBar').style.width=Math.min((aP/data.goals.protein)*100,110)+'%';
+                    document.getElementById('avgCarbBar').style.width=Math.min((aCb/data.goals.carbs)*100,110)+'%';
+                    document.getElementById('avgFatBar').style.width=Math.min((aF/data.goals.fat)*100,110)+'%';
+                    document.getElementById('avgCalGoalLbl').textContent=data.goals.calories;
+                    document.getElementById('avgProtGoalLbl').textContent=data.goals.protein+'g';
+                    document.getElementById('avgCarbGoalLbl').textContent=data.goals.carbs+'g';
+                    document.getElementById('avgFatGoalLbl').textContent=data.goals.fat+'g';
+                } else {
+                    ['avgCal7d','avgProt7d','avgCarb7d','avgFat7d'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='--';});
+                }
+            }
         }
 
         function updateCompliance(type, pct) {
@@ -1129,6 +1245,9 @@
         function updateDisplay() {
             const dayData = getDayData(), { goals } = data;
             document.getElementById('currentDate').textContent = formatDate(currentDate);
+            const streak = calculateStreak();
+            const sb = document.getElementById('streakBadge');
+            if (sb) sb.innerHTML = streak > 0 ? `<span class="streak-badge">🔥 ${streak} day streak</span>` : '';
             const totalCalories = dayData.foods.reduce((s, f) => s + f.calories, 0);
             const totalProtein = dayData.foods.reduce((s, f) => s + f.protein, 0);
             const totalCarbs = dayData.foods.reduce((s, f) => s + f.carbs, 0);
@@ -1165,14 +1284,30 @@
             document.getElementById('bodyWeight').value = goals.bodyWeight;
             document.getElementById('tdee').value = goals.tdee;
             estimateExerciseCalories();
+            // Deficit visualization
+            const tdeeVal = goals.tdee || 2500;
+            const defPct = Math.max(Math.min((netCalories / tdeeVal) * 100, 110), 0);
+            const dfill = document.getElementById('deficitBarFill');
+            if (dfill) {
+                dfill.style.width = defPct + '%';
+                dfill.className = 'deficit-vis-fill' + (netCalories > tdeeVal ? ' surplus' : '');
+            }
+            const dvNet = document.getElementById('dvNetCal'); if (dvNet) dvNet.textContent = netCalories;
+            const dvTdee = document.getElementById('dvTdee'); if (dvTdee) dvTdee.textContent = tdeeVal;
+            const dvDef = document.getElementById('dvDeficit');
+            if (dvDef) {
+                const defAmt = tdeeVal - netCalories;
+                dvDef.textContent = defAmt >= 0 ? `-${defAmt}` : `+${Math.abs(defAmt)}`;
+                dvDef.className = defAmt >= 0 ? 'dv-green' : 'dv-red';
+            }
         }
 
         // Saved Foods Functions
         function initSavedFoods() {
-            // If user has no saved foods, populate with defaults
             if (!data.savedFoods || data.savedFoods.length === 0) {
                 data.savedFoods = [...defaultSavedFoods];
             }
+            if (!data.mealTemplates) data.mealTemplates = [];
         }
 
         function saveCurrentFood() {
@@ -1239,6 +1374,203 @@
                     <button class="delete-saved" onclick="deleteSavedFood(${i}, event)">✕</button>
                 </div>
             `).join('');
+        }
+
+        // ── Streak ──────────────────────────────────────────────────────────
+        function calculateStreak() {
+            let streak = 0;
+            const today = new Date();
+            for (let i = 0; i < 365; i++) {
+                const d = new Date(today); d.setDate(d.getDate() - i);
+                const key = getDateKey(d);
+                const dd = data.days[key];
+                if (dd && dd.foods && dd.foods.length > 0) { streak++; } else { break; }
+            }
+            return streak;
+        }
+
+        // ── Copy Yesterday ───────────────────────────────────────────────────
+        function copyYesterdaysMeals() {
+            const yesterday = new Date(currentDate); yesterday.setDate(yesterday.getDate() - 1);
+            const yData = data.days[getDateKey(yesterday)];
+            if (!yData || !yData.foods || yData.foods.length === 0) { alert('No meals logged yesterday.'); return; }
+            const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const todayData = getDayData();
+            todayData.foods = [...todayData.foods, ...yData.foods.map(f => ({ ...f, time: now }))];
+            saveUserData(); updateDisplay();
+        }
+
+        // ── Food Search (Open Food Facts) ────────────────────────────────────
+        let searchCache = [];
+        async function searchFoods() {
+            const query = document.getElementById('foodSearchInput').value.trim();
+            if (!query) return;
+            const container = document.getElementById('searchResults');
+            container.innerHTML = '<p style="color:#8892b0; text-align:center; padding:15px;">Searching...</p>';
+            try {
+                const res = await fetch(`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&action=process&json=1&page_size=10&fields=product_name,brands,serving_size,nutriments&sort_by=unique_scans_n`);
+                const json = await res.json();
+                const products = (json.products || []).filter(p =>
+                    p.product_name && (p.nutriments?.['energy-kcal_serving'] > 0 || p.nutriments?.['energy-kcal_100g'] > 0)
+                );
+                searchCache = products.slice(0, 7).map(p => {
+                    const cal = Math.round(p.nutriments['energy-kcal_serving'] || p.nutriments['energy-kcal_100g'] || 0);
+                    const protein = Math.round(p.nutriments['proteins_serving'] || p.nutriments['proteins_100g'] || 0);
+                    const carbs = Math.round(p.nutriments['carbohydrates_serving'] || p.nutriments['carbohydrates_100g'] || 0);
+                    const fat = Math.round(p.nutriments['fat_serving'] || p.nutriments['fat_100g'] || 0);
+                    const serving = p.serving_size || '100g';
+                    const brand = p.brands ? p.brands.split(',')[0].trim() : '';
+                    return { name: p.product_name + (brand ? ` — ${brand}` : ''), calories: cal, protein, carbs, fat, serving };
+                });
+                if (searchCache.length === 0) {
+                    container.innerHTML = '<p style="color:#8892b0; text-align:center; padding:15px;">No results found. Try a different term.</p>';
+                    return;
+                }
+                container.innerHTML = searchCache.map((f, i) => `
+                    <div class="saved-food-item" onclick="addSearchedFood(${i})">
+                        <div class="food-info">
+                            <div class="food-name">${escStr(f.name)}</div>
+                            <div class="food-serving">per ${escStr(f.serving)}</div>
+                            <div class="food-macros">P: ${f.protein}g | C: ${f.carbs}g | F: ${f.fat}g</div>
+                        </div>
+                        <div class="food-cals">${f.calories}</div>
+                    </div>
+                `).join('');
+            } catch(e) {
+                container.innerHTML = '<p style="color:#ff6b6b; text-align:center; padding:15px;">Search failed. Check your connection.</p>';
+            }
+        }
+
+        function escStr(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function addSearchedFood(i) {
+            const food = searchCache[i]; if (!food) return;
+            const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            getDayData().foods.push({ ...food, time: now });
+            saveUserData(); updateDisplay();
+            const items = document.querySelectorAll('#searchResults .saved-food-item');
+            if (items[i]) { items[i].style.background = 'rgba(0,255,136,0.2)'; setTimeout(() => items[i].style.background = '', 700); }
+        }
+
+        // ── Meal Templates ───────────────────────────────────────────────────
+        function saveMealTemplate() {
+            const foods = getDayData().foods;
+            if (!foods || foods.length === 0) { alert("No foods in today's log to save as a template."); return; }
+            const name = prompt('Name this meal template (e.g., "My Breakfast"):');
+            if (!name || !name.trim()) return;
+            if (!data.mealTemplates) data.mealTemplates = [];
+            data.mealTemplates.push({
+                name: name.trim(),
+                foods: foods.map(f => ({ name: f.name, calories: f.calories, protein: f.protein, carbs: f.carbs, fat: f.fat }))
+            });
+            saveUserData(); updateMealTemplatesList();
+            alert(`"${name.trim()}" saved as a meal template!`);
+        }
+
+        function loadMealTemplate(i) {
+            const t = (data.mealTemplates || [])[i]; if (!t) return;
+            const now = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            getDayData().foods = [...getDayData().foods, ...t.foods.map(f => ({ ...f, time: now }))];
+            saveUserData(); updateDisplay();
+        }
+
+        function deleteMealTemplate(i, e) {
+            e.stopPropagation();
+            if (!confirm('Delete this meal template?')) return;
+            data.mealTemplates.splice(i, 1);
+            saveUserData(); updateMealTemplatesList();
+        }
+
+        function updateMealTemplatesList() {
+            const container = document.getElementById('mealTemplatesList');
+            if (!container) return;
+            const templates = data.mealTemplates || [];
+            if (templates.length === 0) {
+                container.innerHTML = '<div class="no-saved-foods">No meal templates yet.<br>Log a full day of meals then click "💾 Save as Template".</div>';
+                return;
+            }
+            container.innerHTML = templates.map((t, i) => {
+                const totalCal = t.foods.reduce((s,f)=>s+f.calories,0);
+                const totalProt = t.foods.reduce((s,f)=>s+f.protein,0);
+                return `<div class="saved-food-item" onclick="loadMealTemplate(${i})">
+                    <div class="food-info">
+                        <div class="food-name">${escStr(t.name)}</div>
+                        <div class="meal-meta">${t.foods.length} items · P: ${totalProt}g</div>
+                    </div>
+                    <div class="food-cals">${totalCal}</div>
+                    <button class="delete-saved" onclick="deleteMealTemplate(${i}, event)">✕</button>
+                </div>`;
+            }).join('');
+        }
+
+        // ── Weight Line Chart ────────────────────────────────────────────────
+        function drawWeightLineChart() {
+            const weights = data.weights.slice(-14);
+            const container = document.getElementById('weightChart');
+            if (!weights.length) {
+                container.innerHTML = '<p style="color:#8892b0; text-align:center; padding:30px 0;">No weight data yet.<br>Log your weight above to see your chart.</p>';
+                return;
+            }
+            if (weights.length === 1) {
+                container.innerHTML = `<p style="color:#ccd6f6; text-align:center; font-size:1.8rem; font-weight:bold; padding:20px 0;">${weights[0].weight} lbs</p>`;
+                return;
+            }
+            const W = 400, H = 170;
+            const pad = { top: 15, right: 15, bottom: 28, left: 38 };
+            const pW = W - pad.left - pad.right, pH = H - pad.top - pad.bottom;
+            const vals = weights.map(w => w.weight);
+            const minV = Math.min(...vals) - 1, maxV = Math.max(...vals) + 1, rng = maxV - minV;
+            const tx = i => pad.left + (i / (weights.length - 1)) * pW;
+            const ty = v => pad.top + pH - ((v - minV) / rng) * pH;
+            const linePts = weights.map((w,i) => `${tx(i).toFixed(1)},${ty(w.weight).toFixed(1)}`).join(' ');
+            const areaPts = `${tx(0).toFixed(1)},${(pad.top+pH).toFixed(1)} ${linePts} ${tx(weights.length-1).toFixed(1)},${(pad.top+pH).toFixed(1)}`;
+            // Trend line (linear regression)
+            const n = weights.length;
+            const sX=weights.reduce((_,__,i)=>_+i,0), sY=vals.reduce((a,b)=>a+b,0);
+            const sXY=weights.reduce((_,w,i)=>_+i*w.weight,0), sX2=weights.reduce((_,__,i)=>_+i*i,0);
+            const den=n*sX2-sX*sX, sl=den?(n*sXY-sX*sY)/den:0, intc=(sY-sl*sX)/n;
+            const tc = sl < -0.05 ? '#00ff88' : sl > 0.05 ? '#ff6b6b' : '#f9ca24';
+            // Grid
+            const grids = [0,0.5,1].map(t => {
+                const v = minV + t*rng, y = ty(v).toFixed(1);
+                return `<line x1="${pad.left}" y1="${y}" x2="${W-pad.right}" y2="${y}" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                        <text x="${pad.left-4}" y="${(parseFloat(y)+3).toFixed(1)}" text-anchor="end" fill="#8892b0" font-size="9">${v.toFixed(1)}</text>`;
+            }).join('');
+            // Date labels
+            const lbls = weights.map((w,i) => {
+                if (!(i===0 || i===n-1 || (n>5 && i===Math.round(n/2)))) return '';
+                const d = new Date(w.date+'T12:00:00');
+                return `<text x="${tx(i).toFixed(1)}" y="${H-3}" text-anchor="middle" fill="#8892b0" font-size="9">${d.getMonth()+1}/${d.getDate()}</text>`;
+            }).join('');
+            // Color-coded dots
+            const dots = weights.map((w,i) => {
+                const prev = i>0?weights[i-1].weight:null;
+                const clr = prev===null?'#00d9ff':w.weight<prev?'#00ff88':w.weight>prev?'#ff6b6b':'#f9ca24';
+                return `<circle cx="${tx(i).toFixed(1)}" cy="${ty(w.weight).toFixed(1)}" r="4" fill="${clr}" stroke="#16213e" stroke-width="2"/>`;
+            }).join('');
+            const last=weights[n-1], first=weights[0];
+            const chg=(last.weight-first.weight).toFixed(1);
+            const chgClr=chg<0?'#00ff88':chg>0?'#ff6b6b':'#f9ca24';
+            container.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+                    <span style="font-size:1.4rem;font-weight:bold;color:#ccd6f6;">${last.weight} lbs</span>
+                    <span style="font-size:0.82rem;color:${chgClr};">${chg>0?'+':''}${chg} lbs · ${n} entries</span>
+                </div>
+                <svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible;">
+                    <defs>
+                        <linearGradient id="areaG" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#00d9ff" stop-opacity="0.12"/>
+                            <stop offset="100%" stop-color="#00d9ff" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    ${grids}
+                    <polygon points="${areaPts}" fill="url(#areaG)"/>
+                    <polyline points="${linePts}" fill="none" stroke="#00d9ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                    <line x1="${tx(0).toFixed(1)}" y1="${ty(sl*0+intc).toFixed(1)}" x2="${tx(n-1).toFixed(1)}" y2="${ty(sl*(n-1)+intc).toFixed(1)}" stroke="${tc}" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>
+                    ${dots}${lbls}
+                </svg>`;
         }
 
         function initQuickAdd() {
