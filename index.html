@@ -1306,6 +1306,14 @@
         function initSavedFoods() {
             if (!data.savedFoods || data.savedFoods.length === 0) {
                 data.savedFoods = [...defaultSavedFoods];
+            } else {
+                // Merge in any default foods not already in the user's list
+                const existingNames = data.savedFoods.map(f => f.name.toLowerCase());
+                defaultSavedFoods.forEach(f => {
+                    if (!existingNames.includes(f.name.toLowerCase())) {
+                        data.savedFoods.push(f);
+                    }
+                });
             }
             if (!data.mealTemplates) data.mealTemplates = [];
         }
